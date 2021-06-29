@@ -1004,6 +1004,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 		goto fork_out;
 
 	retval = -ENOMEM;
+	// 以父进程为模板copy出子进程的task_struct
 	p = dup_task_struct(current);
 	if (!p)
 		goto fork_out;
@@ -1015,6 +1016,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	DEBUG_LOCKS_WARN_ON(!p->softirqs_enabled);
 #endif
 	retval = -EAGAIN;
+	// 检查创建新进程后，进程总数是否超出了系统限制
 	if (atomic_read(&p->user->processes) >=
 			p->signal->rlim[RLIMIT_NPROC].rlim_cur) {
 		if (!capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE) &&
@@ -1399,6 +1401,11 @@ static int fork_traceflag(unsigned clone_flags)
  *
  * It copies the process, and if successful kick-starts
  * it and waits for it to finish using the VM if required.
+ * 
+ * 参数说明：
+ * clone_flags  低字节指定子进程终止时发给父进程的信号，高字节制定其他配置；
+ * stack_start  用户状态下栈的起始地址
+ * 
  */
 long do_fork(unsigned long clone_flags,
 	      unsigned long stack_start,
@@ -1417,6 +1424,7 @@ long do_fork(unsigned long clone_flags,
 			clone_flags |= CLONE_PTRACE;
 	}
 
+    // 执行进程复制
 	p = copy_process(clone_flags, stack_start, regs, stack_size,
 			child_tidptr, NULL);
 	/*
@@ -1451,6 +1459,7 @@ long do_fork(unsigned long clone_flags,
 		}
 
 		if (!(clone_flags & CLONE_STOPPED))
+		    // 将子进程提交到调度器队列，等待调度器调度
 			wake_up_new_task(p, clone_flags);
 		else
 			p->state = TASK_STOPPED;

@@ -915,7 +915,9 @@ struct sched_entity {
 };
 
 struct task_struct {
-	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
+	/* -1 unrunnable, 0 runnable(包含就绪&running), >0 stopped */
+	volatile long state;	
+	// 保存当前线程信息和执行栈
 	void *stack;
 	atomic_t usage;
 	unsigned int flags;	/* per process flags, defined below */
