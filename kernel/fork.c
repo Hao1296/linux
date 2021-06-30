@@ -1132,22 +1132,27 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 		goto bad_fork_cleanup_policy;
 	if ((retval = audit_alloc(p)))
 		goto bad_fork_cleanup_security;
-	/* copy all the process information */
-	if ((retval = copy_semundo(clone_flags, p)))
+
+	/* 
+	    copy all the process information 
+	    到目前为止，父子进程的各类资源指针都指向同一个地址。
+		故需要根据flag来决定是"和父进程共享" or "将对应的资源做一个深拷贝“
+	 */
+	if ((retval = copy_semundo(clone_flags, p))) // System V信号量
 		goto bad_fork_cleanup_audit;
-	if ((retval = copy_files(clone_flags, p)))
+	if ((retval = copy_files(clone_flags, p))) // 文件描述符
 		goto bad_fork_cleanup_semundo;
-	if ((retval = copy_fs(clone_flags, p)))
+	if ((retval = copy_fs(clone_flags, p))) // 文件系统上下文
 		goto bad_fork_cleanup_files;
 	if ((retval = copy_sighand(clone_flags, p)))
 		goto bad_fork_cleanup_fs;
 	if ((retval = copy_signal(clone_flags, p)))
 		goto bad_fork_cleanup_sighand;
-	if ((retval = copy_mm(clone_flags, p)))
+	if ((retval = copy_mm(clone_flags, p))) // 虚拟地址空间(需要copy的话也是copy页表，不复制实际数据)
 		goto bad_fork_cleanup_signal;
 	if ((retval = copy_keys(clone_flags, p)))
 		goto bad_fork_cleanup_mm;
-	if ((retval = copy_namespaces(clone_flags, p)))
+	if ((retval = copy_namespaces(clone_flags, p))) // 命名空间
 		goto bad_fork_cleanup_keys;
 	retval = copy_thread(0, clone_flags, stack_start, stack_size, p, regs);
 	if (retval)

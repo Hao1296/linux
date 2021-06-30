@@ -1032,6 +1032,7 @@ struct task_struct {
 	struct group_info *group_info;
 	kernel_cap_t   cap_effective, cap_inheritable, cap_permitted;
 	unsigned keep_capabilities:1;
+	// 拥有当前进程的user
 	struct user_struct *user;
 #ifdef CONFIG_KEYS
 	struct key *request_key_auth;	/* assumed request_key authority */
@@ -1048,7 +1049,11 @@ struct task_struct {
 /* ipc stuff */
 	struct sysv_sem sysvsem;
 #endif
-/* CPU-specific state of this task */
+/* 
+  CPU-specific state of this task 
+  
+  和体系结构强相关，保存进程上下文切换时需要恢复/保存的寄存器&其他数据
+*/
 	struct thread_struct thread;
 /* filesystem information */
 	struct fs_struct *fs;
