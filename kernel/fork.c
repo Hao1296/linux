@@ -1154,10 +1154,13 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 		goto bad_fork_cleanup_mm;
 	if ((retval = copy_namespaces(clone_flags, p))) // 命名空间
 		goto bad_fork_cleanup_keys;
-	retval = copy_thread(0, clone_flags, stack_start, stack_size, p, regs);
+	/**
+	 * note：结合linux源码中thread的语义，可以看出"线程"的本质就是"执行上下文“
+	 */
+	retval = copy_thread(0, clone_flags, stack_start, stack_size, p, regs);// 复制进程执行上下文
 	if (retval)
 		goto bad_fork_cleanup_namespaces;
-
+	// 为子进程分配pid
 	if (pid != &init_struct_pid) {
 		retval = -ENOMEM;
 		pid = alloc_pid(task_active_pid_ns(p));
@@ -1174,6 +1177,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	p->pid = pid_nr(pid);
 	p->tgid = p->pid;
 	if (clone_flags & CLONE_THREAD)
+	    // 若为线程，则线程组id和父进程/线程的线程组id相同，最终为父进程的pid
 		p->tgid = current->tgid;
 
 	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
@@ -1429,7 +1433,7 @@ long do_fork(unsigned long clone_flags,
 			clone_flags |= CLONE_PTRACE;
 	}
 
-    // 执行进程复制
+    // 执行进程复制(仅复制数据，未将进程提交到调度器队列)
 	p = copy_process(clone_flags, stack_start, regs, stack_size,
 			child_tidptr, NULL);
 	/*
@@ -1448,6 +1452,7 @@ long do_fork(unsigned long clone_flags,
 				task_pid_vnr(p);
 
 		if (clone_flags & CLONE_PARENT_SETTID)
+		    // 将子线程的pid复制到调用clone时所制定的地址中
 			put_user(nr, parent_tidptr);
 
 		if (clone_flags & CLONE_VFORK) {
