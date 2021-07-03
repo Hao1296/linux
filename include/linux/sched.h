@@ -844,6 +844,9 @@ struct sched_class {
 	 * 选择下一个将要运行的进程
 	 */
 	struct task_struct * (*pick_next_task) (struct rq *rq);
+	/**
+	 * 在用新进程代替当前运行的进程前调用 
+	 */
 	void (*put_prev_task) (struct rq *rq, struct task_struct *p);
 
 #ifdef CONFIG_SMP
@@ -883,12 +886,12 @@ struct load_weight {
  */
 struct sched_entity {
 	struct load_weight	load;		/* for load-balancing */
-	struct rb_node		run_node;
-	unsigned int		on_rq;
+	struct rb_node		run_node;   // 红黑树节点
+	unsigned int		on_rq; // 是否在就绪队列中等待调度
 
 	u64			exec_start;
-	u64			sum_exec_runtime;
-	u64			vruntime;
+	u64			sum_exec_runtime; // cpu消耗时间总和
+	u64			vruntime; // 虚拟时间
 	u64			prev_sum_exec_runtime;
 
 #ifdef CONFIG_SCHEDSTATS
@@ -958,6 +961,7 @@ struct task_struct {
 	struct list_head run_list;
 	// 当前进程所属调度器
 	const struct sched_class *sched_class;
+	// 调度实体
 	struct sched_entity se;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS

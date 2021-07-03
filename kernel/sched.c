@@ -1966,7 +1966,9 @@ context_switch(struct rq *rq, struct task_struct *prev,
 	/* Here we just switch the register state and the stack. */
 	switch_to(prev, next, prev);
 
-	barrier();
+    // switch_to后的代码只有在当前进程下次被选中运行时才会执行
+
+	barrier();// 编译器指令, 确保 switch_to 和 finish_task_switch 两个函数不会因指令重排而改变顺序
 	/*
 	 * this_rq must be evaluated again because prev may have moved
 	 * CPUs since it called schedule(), thus the 'rq' on its stack
