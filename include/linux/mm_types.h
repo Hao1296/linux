@@ -188,8 +188,11 @@ struct mm_struct {
 
 	unsigned long total_vm, locked_vm, shared_vm, exec_vm;
 	unsigned long stack_vm, reserved_vm, def_flags, nr_ptes;
+	// 代码区起始位置和结束位置；数据区开始位置和结束位置
 	unsigned long start_code, end_code, start_data, end_data;
+	// 堆起始位置和结束位置；栈开始位置
 	unsigned long start_brk, brk, start_stack;
+	// 参数起始位置和结束位置；环境变量起始位置和结束位置
 	unsigned long arg_start, arg_end, env_start, env_end;
 
 	unsigned long saved_auxv[AT_VECTOR_SIZE]; /* for /proc/PID/auxv */

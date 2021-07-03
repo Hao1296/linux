@@ -822,14 +822,27 @@ struct rq;
 struct sched_domain;
 
 struct sched_class {
+	// 按 实时调度类、完全公平调度类、空闲调度类 的俄顺序将各调度器类连接起来
 	const struct sched_class *next;
-
+	/**
+	 * 向就绪队列添加一个新进程
+	 */
 	void (*enqueue_task) (struct rq *rq, struct task_struct *p, int wakeup);
+	/**
+	 *从就绪队列中移除一个进程
+	 */
 	void (*dequeue_task) (struct rq *rq, struct task_struct *p, int sleep);
+	/**
+	 * 进程主动放弃cpu控制权
+	 */
 	void (*yield_task) (struct rq *rq);
-
+    /**
+	 * 唤醒一个新进程来抢占运行中的进程
+	 */
 	void (*check_preempt_curr) (struct rq *rq, struct task_struct *p);
-
+    /**
+	 * 选择下一个将要运行的进程
+	 */
 	struct task_struct * (*pick_next_task) (struct rq *rq);
 	void (*put_prev_task) (struct rq *rq, struct task_struct *p);
 
@@ -843,8 +856,13 @@ struct sched_class {
 			      struct rq *busiest, struct sched_domain *sd,
 			      enum cpu_idle_type idle);
 #endif
-
+    /**
+	 * 当前进程调度策略放生变化时调用
+	 */
 	void (*set_curr_task) (struct rq *rq);
+	/**
+	 * 供周期性调度器每次激活时调用
+	 */
 	void (*task_tick) (struct rq *rq, struct task_struct *p);
 	void (*task_new) (struct rq *rq, struct task_struct *p);
 };
@@ -930,9 +948,15 @@ struct task_struct {
 	int oncpu;
 #endif
 #endif
-
+	/**
+	 * static_prio:静态优先级
+	 * normal_prio:动态优先级
+	 * prio:内核使用的优先级
+	 */
 	int prio, static_prio, normal_prio;
+	// 供循环实施调度器使用
 	struct list_head run_list;
+	// 当前进程所属调度器
 	const struct sched_class *sched_class;
 	struct sched_entity se;
 
@@ -956,8 +980,18 @@ struct task_struct {
 	unsigned int btrace_seq;
 #endif
 
+	/**
+	 * 该进程使用的调度策略
+	 * SCHED_NORMAL 
+	 * SCHED_BATCH
+	 * SCHED_IDLE
+	 * SCHED_RR
+	 * SCHED_FIFO
+	 */
 	unsigned int policy;
+	// 限制当前进程可以在那些cpu上运行
 	cpumask_t cpus_allowed;
+	// 供循环实施调度器使用
 	unsigned int time_slice;
 
 #if defined(CONFIG_SCHEDSTATS) || defined(CONFIG_TASK_DELAY_ACCT)
@@ -1012,6 +1046,7 @@ struct task_struct {
 	int __user *set_child_tid;		/* CLONE_CHILD_SETTID */
 	int __user *clear_child_tid;		/* CLONE_CHILD_CLEARTID */
 
+   // 实时进程的优先级
 	unsigned int rt_priority;
 	cputime_t utime, stime, utimescaled, stimescaled;
 	cputime_t gtime;
