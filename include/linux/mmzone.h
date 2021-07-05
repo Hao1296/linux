@@ -224,6 +224,7 @@ struct zone {
 	 */
 	unsigned long		lowmem_reserve[MAX_NR_ZONES];
 
+    // pageset用于实现每个cpu的热/冷页帧列表
 #ifdef CONFIG_NUMA
 	int node;
 	/*
@@ -243,6 +244,7 @@ struct zone {
 	/* see spanned/present_pages for more description */
 	seqlock_t		span_seqlock;
 #endif
+    // 用于实现伙伴系统
 	struct free_area	free_area[MAX_ORDER];
 
 #ifndef CONFIG_SPARSEMEM
@@ -258,11 +260,21 @@ struct zone {
 
 	/* Fields commonly accessed by the page reclaim scanner */
 	spinlock_t		lru_lock;	
+	// 活动页列表(频繁访问即为“活动”)
 	struct list_head	active_list;
+	// 不活动页列表
 	struct list_head	inactive_list;
+	// 回收内存时需要扫描的活动页数量
 	unsigned long		nr_scan_active;
+	// 回收内存时需要扫描的非活动页数量
 	unsigned long		nr_scan_inactive;
+	// 自上一次换出一页以来，有多少页未能成功扫描
 	unsigned long		pages_scanned;	   /* since last reclaim */
+	/**
+	 * ZONE_ALL_UNRECLAIMABLE  域内所有的页都被"钉住"(如mlock)，没有可换出(或称回收)的页
+	 * ZONE_RECLAIM_LOCKED  防止并法回收
+	 * ZONE_OOM_LOCKED  内存域即可回收
+	 */
 	unsigned long		flags;		   /* zone flags, see below */
 
 	/* Zone statistics */
@@ -318,8 +330,11 @@ struct zone {
 	/*
 	 * Discontig memory support fields.
 	 */
+	// 指向该域所属的结点
 	struct pglist_data	*zone_pgdat;
-	/* zone_start_pfn == zone_start_paddr >> PAGE_SHIFT */
+	/* zone_start_pfn == zone_start_paddr >> PAGE_SHIFT 
+	   该域内第一个页帧的索引
+	*/
 	unsigned long		zone_start_pfn;
 
 	/*
@@ -527,15 +542,22 @@ extern struct page *mem_map;
  *
  * Memory statistics and page replacement data structures are maintained on a
  * per-zone basis.
+ * 
+ * 每个“内存结点”(pglist_data)关联到一个处理器
  */
 struct bootmem_data;
 typedef struct pglist_data {
+	// 结点中的"内存域"列表
 	struct zone node_zones[MAX_NR_ZONES];
+	// 备用内存结点及其内存域列表
 	struct zonelist node_zonelists[MAX_ZONELISTS];
+	// 不同内存域的个数
 	int nr_zones;
 #ifdef CONFIG_FLAT_NODE_MEM_MAP
+    // 结点中所有的物理内存页
 	struct page *node_mem_map;
 #endif
+    // “自举内存分配器”，用于满足内存管理子系统初始化前内核对内存的需求
 	struct bootmem_data *bdata;
 #ifdef CONFIG_MEMORY_HOTPLUG
 	/*
@@ -547,11 +569,14 @@ typedef struct pglist_data {
 	 */
 	spinlock_t node_size_lock;
 #endif
+    // 结点中第一个页帧的逻辑编号(每个页帧都有一个全局唯一(不止在结点内)的编号)
 	unsigned long node_start_pfn;
 	unsigned long node_present_pages; /* total number of physical pages */
 	unsigned long node_spanned_pages; /* total size of physical page
 					     range, including holes */
+	// 全局唯一的结点编号
 	int node_id;
+	// 交换守护进程的等待队列
 	wait_queue_head_t kswapd_wait;
 	struct task_struct *kswapd;
 	int kswapd_max_order;
