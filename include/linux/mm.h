@@ -160,9 +160,13 @@ struct vm_fault {
  * to the functions called when a no-page or a wp-page exception occurs. 
  */
 struct vm_operations_struct {
+	// 创建一个虚拟内存区域
 	void (*open)(struct vm_area_struct * area);
+	// 删除一个虚拟内存区域
 	void (*close)(struct vm_area_struct * area);
+	// 自动触发的缺页异常过程会调用该函数，将对应数据读入映射到用户地址空间的物理内存页中
 	int (*fault)(struct vm_area_struct *vma, struct vm_fault *vmf);
+	// 老版本中起到fault函数相同的作用; 出于兼容的目的而未被删除
 	struct page *(*nopage)(struct vm_area_struct *area,
 			unsigned long address, int *type);
 	unsigned long (*nopfn)(struct vm_area_struct *area,

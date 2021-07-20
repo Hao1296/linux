@@ -97,6 +97,7 @@ struct page {
  * library, the executable area etc).
  */
 struct vm_area_struct {
+	// 所属虚拟内存地址空间
 	struct mm_struct * vm_mm;	/* The address space we belong to. */
 	unsigned long vm_start;		/* Our start address within vm_mm. */
 	unsigned long vm_end;		/* The first byte after our end address
@@ -154,7 +155,17 @@ struct vm_area_struct {
 };
 
 struct mm_struct {
+	/**
+	 * 维护虚拟内存地址空间内的"区域"。
+	 * 
+	 * 注意，这里的"区域"并非指"内存域", 而是简单由"起始地址"和"结束地址"划定的地址区间 
+	 */
 	struct vm_area_struct * mmap;		/* list of VMAs */
+	/* 
+	 * mmap链表中的元素也会存到红黑树中,
+	 * 这样在向链表添加元素时可先根据红黑树检索到目标位置,
+	 * 加快处理速度
+	 */
 	struct rb_root mm_rb;
 	struct vm_area_struct * mmap_cache;	/* last find_vma result */
 	unsigned long (*get_unmapped_area) (struct file *filp,
